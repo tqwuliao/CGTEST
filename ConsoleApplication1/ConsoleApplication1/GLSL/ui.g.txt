@@ -1,0 +1,14 @@
+#version 420 core
+layout (location = 0) in vec3 position;
+layout (location = 1) in vec3 normal;
+layout (location = 2) in vec2 texCoords;
+out vec2 TexCoords;
+
+uniform vec2 scale={1.0f,1.0f};
+uniform vec2 offset={0.0f,0.0f};
+
+void main()
+{
+    gl_Position = vec4((position.x+1.0)*scale.x + offset.x - 1.0f,(position.y - 1.0) * scale.y - offset.y + 1.0f,1.0,1.0);
+    TexCoords = texCoords;
+}

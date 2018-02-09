@@ -1,0 +1,193 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Shader">
+      <UniqueIdentifier>{efbf7188-d854-49ab-8268-9ad8b3f4574c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="源.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="shader.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Model.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="UiClass.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CacheManager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DObject.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="GameObject.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RObject.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SObject.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SModel.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SMesh.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="TextRenderer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ParticleFactory.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Terrain.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="shader.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Model.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="UiClass.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CacheManager.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DObject.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="GameObject.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RObject.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SObject.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SModel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SMesh.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TextRenderer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ParticleFactory.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Terrain.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="源.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="GLSL\1.txt">
+      <Filter>Shader</Filter>
+    </Text>
+    <Text Include="GLSL\blur.txt">
+      <Filter>Shader</Filter>
+    </Text>
+    <Text Include="GLSL\color.2g.txt">
+      <Filter>Shader</Filter>
+    </Text>
+    <Text Include="GLSL\color.g.txt">
+      <Filter>Shader</Filter>
+    </Text>
+    <Text Include="GLSL\light.g.txt">
+      <Filter>Shader</Filter>
+    </Text>
+    <Text Include="GLSL\model1.g.txt">
+      <Filter>Shader</Filter>
+    </Text>
+    <Text Include="GLSL\scene.g.txt">
+      <Filter>Shader</Filter>
+    </Text>
+    <Text Include="GLSL\skysha.g.txt">
+      <Filter>Shader</Filter>
+    </Text>
+    <Text Include="GLSL\skyver.g.txt">
+      <Filter>Shader</Filter>
+    </Text>
+    <Text Include="GLSL\ui.f.txt">
+      <Filter>Shader</Filter>
+    </Text>
+    <Text Include="GLSL\ui.g.txt">
+      <Filter>Shader</Filter>
+    </Text>
+    <Text Include="GLSL\vertex.g.txt">
+      <Filter>Shader</Filter>
+    </Text>
+    <Text Include="GLSL\vertex2.g.txt">
+      <Filter>Shader</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="GLSL\color.g">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="GLSL\shadow.fs">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="GLSL\shadow.gs">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="GLSL\shadow.vs">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="GLSL\vertex.g">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="GLSL\water.g">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="GLSL\water.p">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="GLSL\water.v">
+      <Filter>Shader</Filter>
+    </None>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,27 @@
+#version 420 core
+layout (location = 0) in vec3 position;
+layout (location = 1) in vec3 normal;
+layout (location = 2) in vec2 texCoords;
+
+out vec3 FragPos;
+out vec3 Normal;
+out vec2 TexCoords;
+out vec3 hit;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
+uniform vec3 cameraPos;
+uniform vec3 cameraDir;
+
+void main()
+{
+    mat4 mvp = projection * view * model;
+    gl_Position = mvp * vec4(position,1.0);//projection * view * model * vec4(PosL.xyz,1.0);
+    Normal =  mat3(transpose(inverse(model))) * normal;
+    Normal = vec4(Normal,1.0);
+    FragPos = vec3((model*PosL).xyz);
+    TexCoords = texCoords;
+    //hit = abs(dot(cameraPos-FragPos,cameraDir))/(length(cameraPos-FragPos)*length(cameraDir));
+}

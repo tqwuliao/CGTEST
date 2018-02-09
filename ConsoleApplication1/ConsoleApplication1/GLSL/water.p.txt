@@ -1,0 +1,15 @@
+#version 420 core
+in vec3 Normal;
+layout (location = 0) out vec4 FragColor;
+layout (location = 1) out vec4 BrightColor;
+layout (location = 2) out vec4 Far;
+void main()
+{
+    FragColor = vec4(0.25,0.79,0.48,0.4);
+    vec3 n = normalize(Normal);
+    FragColor *= length(n*normalize(vec3(0.02,1.0,0.04)))+0.1;
+    FragColor.a = 0.5;
+   //FragColor = vec4(1.0,0.0,0.0,1.0);
+    BrightColor = vec4(0.0,0.0,0.0,1);
+    Far  = vec4(0,0,0,0.90);
+}

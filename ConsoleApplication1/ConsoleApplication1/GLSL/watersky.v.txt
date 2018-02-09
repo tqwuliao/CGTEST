@@ -1,0 +1,23 @@
+#version 420 core
+layout (location = 0) in vec2 position;
+layout (location = 1) in vec2 texcoords;
+out vec3 TexCoords;
+out vec2 tex;
+out vec3 normal;
+
+uniform mat4 projection;
+uniform mat4 view;
+uniform mat4 model;
+uniform vec3 cameraPos;
+uniform sampler2D waterMap;
+uniform sampler2D waterMap2;
+uniform float time;
+
+void main()
+{
+    vec4 worldPos = model * vec4(position,0.0,1.0);
+    tex = (worldPos.xz / 8.0 + vec2(cos(time/5.0),time/4.0));
+    //worldPos.y += 2.0-normalize(1*texture(waterMap,tex).rgb+vec3(-1.0,-1.0,-1.0)+1*texture(waterMap2,tex+vec2(-time/4.0,time)).rgb).g/1.0;
+    gl_Position = projection * view * worldPos;
+    TexCoords = worldPos.xyz-cameraPos;
+}

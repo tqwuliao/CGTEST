@@ -1,0 +1,88 @@
+#version 420 core
+layout (location = 0) in vec3 position;
+layout (location = 1) in vec3 normal;
+layout (location = 2) in vec2 texCoords;
+layout (location = 3) in ivec4 BoneIDs;
+layout (location = 4) in vec4 Weights;
+
+out vec3 FragPos;
+out vec3 Normal;
+out vec2 TexCoords;
+out vec4 test;
+out float hit;
+//out vec4 FragPosLightSpace;
+out VS_OUT {
+    vec2 texCoords;
+    vec3 normal;
+    vec3 fragPos;
+} vs_out;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+uniform mat4 transforms[100];
+uniform mat4 Tinverse;
+uniform vec3 cameraPos;
+uniform vec3 cameraDir;
+uniform bool dynamic;
+
+uniform sampler2D waterMap;
+uniform sampler2D waterMap2;
+uniform float time;
+
+//uniform mat4 lightSpaceMatrix;
+void main()
+{
+    mat4 BoneTransform;
+    vec4 PosL;
+    if(dynamic) {
+       BoneTransform = transforms[BoneIDs[0]] * Weights[0] ;
+       BoneTransform += transforms[BoneIDs[1]] * Weights[1];
+       BoneTransform += transforms[BoneIDs[2]] * Weights[2];
+       BoneTransform += transforms[BoneIDs[3]] * Weights[3];
+       BoneTransform *= Tinverse;
+       BoneTransform = transpose(BoneTransform);
+       PosL = BoneTransform*vec4(position,1.0);
+    } else {
+       BoneTransform[0] = vec4(1,0,0,0);
+       BoneTransform[1] = vec4(0,1,0,0);
+       BoneTransform[2] = vec4(0,0,1,0);
+       BoneTransform[3] = vec4(0,0,0,1);
+       PosL = vec4(position,1.0);
+    }
+    mat4 vp = projection * view;
+    vec4 worldPos = model * PosL;
+    gl_Position = vp * worldPos;//projection * view * model * vec4(PosL.xyz,1.0);
+    
+    if(worldPos.y < 7.10) {
+        
+       vec3 diff_ = worldPos.xyz - cameraPos;
+       vec3 hitpos = mix(cameraPos,worldPos.xyz,(cameraPos.y-7.10)/(cameraPos.y-worldPos.y));
+       vec2 tex = (hitpos.xz / 8.0 + vec2(cos(time/5.0),time/4.0));
+       vec3 waterNormal = normalize(0.8*texture(waterMap,tex).rgb+
+                    0.5*texture(waterMap2,tex+vec2(sin(time/5.0),-cos(time/5.0))).rgb+
+                    0.3*texture(waterMap,tex+vec2(sin(time/8.0),-cos(time/4.0))).rgb+
+                    0.2*texture(waterMap,tex/2.0+vec2(cos(time/8.0),-cos(1-time/16.0))).rgb);
+       waterNormal = waterNormal.y < 0 ? -waterNormal : waterNormal;
+       //vec3 newdir = refract(diff_,waterNormal,1.8);
+       //newdir /= newdir.x;
+       vec3 newpos = mix(hitpos,worldPos.xyz,waterNormal);
+      gl_Position = vp * vec4(newpos,1.0);
+    }
+
+    //gl_Position = PosL;
+    Normal =  mat3(transpose(inverse(model))) * normal;
+    vec4 _n = BoneTransform * vec4(Normal,1.0);
+    Normal = _n.xyz;
+    FragPos = vec3((model*PosL).xyz);
+    TexCoords = texCoords;
+    //hit = abs(dot(cameraPos-FragPos,cameraDir))/(length(cameraPos-FragPos)*length(cameraDir));
+    vs_out.texCoords = texCoords;
+    vs_out.normal = Normal;
+    vs_out.fragPos = FragPos;
+    //test = vec4((BoneTransform*gl_Position).xyz,1.0);
+    //test += vec4(1.0);
+    //test /= 2.0;
+    //test = vec4(view[1].xyz,1);
+    //FragPosLightSpace = lightSpaceMatrix  * vec4(FragPos, 1.0);
+}
