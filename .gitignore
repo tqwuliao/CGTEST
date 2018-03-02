@@ -1,4 +1,5 @@
 #
+
 *.jpg
 *.png
 *.obj
@@ -28,6 +29,7 @@ lib2/
 *.log
 *.rar
 *.zip
+!Pic/*.jpg
 
 # Windows image file caches
 Thumbs.db
