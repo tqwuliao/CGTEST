@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-Model::Model(const GLchar* path) : _path(path),anims(0)
+Model::Model(const GLchar* path) : _path(path),anims(0),headPos(-1)
 {
 	Animations.reset(new std::map<std::string,Anims>);
 	bone_table.reset(new std::map<std::string, int>);
@@ -28,6 +28,7 @@ Model::Model(const Model & model) : _path(model._path),
 	tickPsec(model.tickPsec),
 	finals(model.finals),
 	aniBuffer(model.aniBuffer),
+	headPos(model.headPos),
 	anims(0)
 {
 	for (int i = 0; i < model.bones.size(); i++)
@@ -49,6 +50,18 @@ void Model::draw(shader& Shader)
 	}
 	for (GLuint i = 0;i < this->meshes.size();i++)
 		this->meshes[i]->Draw(Shader);
+}
+
+void Model::draw(shader& Shader,int repeat)
+{
+	char tmp[32];
+	Shader.bind("Tinverse", (const GLfloat*)&INVERSE);
+	for (int i = 0; i < bones.size(); i++)
+	{
+		Shader.bind("transforms", (const GLfloat*)&finals[i], i);
+	}
+	for (GLuint i = 0;i < this->meshes.size();i++)
+		this->meshes[i]->Draw(Shader,repeat);
 }
 
 
@@ -213,7 +226,15 @@ void Model::animate(std::string symbol, float& tick)
 	float frac = (tick / tickPsec - start) / (end - start);
 	for (int i = 0;i < bones.size();i++)
 	{
-		bones[i].fin = matrix1->at(i) * (1 - frac) + matrix2->at(i) * frac;
+		if (i != headPos || headPos == -1)
+			bones[i].fin = matrix1->at(i) * (1 - frac) + matrix2->at(i) * frac;
+		else
+		{
+			aiMatrix4x4 rot;
+			rot = aiMatrix4x4::Rotation(headangle, aiVector3D{ 0,1.0,0 }, rot);
+			bones[i].fin = (matrix1->at(i) * (1 - frac) + matrix2->at(i) * frac) * rot;
+
+		}
 	}
 }
 
@@ -250,7 +271,15 @@ void Model::animate(float & tick)
 	float frac = (tick / tickPsec - start) / (end - start);
 	for (int i = 0;i < bones.size();i++)
 	{
-		bones[i].fin = matrix1->at(i) * (1 - frac) + matrix2->at(i) * frac;
+		if(i != headPos || headPos == -1) 
+			bones[i].fin = matrix1->at(i) * (1 - frac) + matrix2->at(i) * frac;
+		else
+		{
+			aiMatrix4x4 rot;
+			rot = aiMatrix4x4::Rotation(headangle, aiVector3D{0,1.0,0},rot);
+			bones[i].fin = (matrix1->at(i) * (1 - frac) + matrix2->at(i) * frac) * rot; 
+
+		}
 	}
 }
 
@@ -326,7 +355,7 @@ void Model::registAnimation(std::string filename, std::string symbol)
 	}
 }
 
-#ifndef HH
+
 void Model::animateNode(const Node & RootNode, float tick,const aiMatrix4x4 & pMat)
 {
 	std::map<std::string, Animation>::iterator it = anims->Seq.find(RootNode.name.data());
@@ -529,7 +558,6 @@ GLuint Model::findKeySca(float tick, const Animation & anim)
 	}
 	return anim.mScalingKeys.size();
 }
-#endif
 
 void Model::processNode(aiNode * RootNode,const aiScene * scene)
 {
@@ -635,10 +663,13 @@ Mesh* Model::generateMesh(aiMesh * content, const aiScene * scene, const int Bas
 		tmp = content->mBones[i]->mName.C_Str();
 		GLuint boneIndex;
 		if (bone_table.get()->find(tmp) == bone_table.get()->end()) {
+			//printf("Bones add: %s\n", tmp.data());
+			
 			bones.push_back(_Bone{
 				content->mBones[i]->mOffsetMatrix,
 				content->mBones[i]->mOffsetMatrix });
 			boneIndex = bones.size() - 1;
+			//if (tmp == "Head") headPos = boneIndex;
 			bone_table.get()->insert(bone_table.get()->end(), std::make_pair(tmp, boneIndex));
 		}
 		else boneIndex = bone_table.get()->at(tmp);
@@ -650,8 +681,8 @@ Mesh* Model::generateMesh(aiMesh * content, const aiScene * scene, const int Bas
 			vertices[as.mVertexId].WEIGHTS[bSize[as.mVertexId]] = as.mWeight;
 			bSize[as.mVertexId]++;
 		}
-		std::cout << "-Bone : " << tmp << content->mBones[i]->mWeights->mVertexId 
-			<< " support " << content->mBones[i]->mNumWeights << std::endl;
+		/*std::cout << "-Bone : " << tmp << content->mBones[i]->mWeights->mVertexId 
+			<< " support " << content->mBones[i]->mNumWeights << std::endl;*/
 	}
 	delete[] bSize;
 	for (GLuint i = 0; i < content->mNumFaces;i++)
@@ -665,19 +696,22 @@ Mesh* Model::generateMesh(aiMesh * content, const aiScene * scene, const int Bas
 	if (content->mMaterialIndex >= 0)
 	{
 		aiMaterial* material = scene->mMaterials[content->mMaterialIndex];
-		std::vector<std::shared_ptr<Texture>> diffuseMaps, specularMaps,normalMaps,opacityMaps;
+		std::vector<std::shared_ptr<Texture>> diffuseMaps, specularMaps,normalMaps,ambientMaps,opacityMaps;
 		diffuseMaps = loadMaterialTextures(material,
 			aiTextureType_DIFFUSE, "texture_diffuse");
 		specularMaps = loadMaterialTextures(material,
-			aiTextureType_AMBIENT, "texture_specular");
+			aiTextureType_SPECULAR, "texture_specular");
 		normalMaps = loadMaterialTextures(material,
 			aiTextureType_HEIGHT, "normalMap");
 		opacityMaps = loadMaterialTextures(material,
 			aiTextureType_OPACITY, "opacityMap");
-		textures.insert(textures.end(), diffuseMaps.begin(),diffuseMaps.end());
+		ambientMaps = loadMaterialTextures(material,
+			aiTextureType_AMBIENT, "texture_ambient");
+		textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
 		textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
 		textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
 		textures.insert(textures.end(), opacityMaps.begin(), opacityMaps.end());
+		textures.insert(textures.end(), ambientMaps.begin(), ambientMaps.end());
 		if (normalMaps.size() > 0)
 			normalhas = true;
 		if (opacityMaps.size() > 0)
@@ -704,7 +738,9 @@ std::vector<std::shared_ptr<Texture>> Model::loadMaterialTextures(aiMaterial* ma
 		if (std::string(str.C_Str()) == "*0") str.Set("0.dds");
 
 		std::cout << " Try to Fetch " << str.C_Str() << std::endl;
-		std::string path = (this->directory + str.C_Str());
+		std::string tmp = str.C_Str();
+		while (tmp[0] == '.' || tmp[0] == '/') tmp = tmp.data() + 1;
+		std::string path = (this->directory + "/" + tmp);
 		Texture* find = CacheManager<Texture>::Instance().getResource(path);
 		if (find)
 		{

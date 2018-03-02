@@ -27,10 +27,12 @@ public:
 	bool normalhas;
 	bool opacityhas;
 	int BaseID;
+	
 	Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, std::vector<std::shared_ptr<Texture>> textures);
 	Mesh(Vertex v[], int vl, GLuint g[], int gl);
 	Mesh();
 	virtual void Draw(shader& Shader);
+	void Draw(shader & Shader, int repeat);
 	void reMesh(Vertex v[], int vl);
 	~Mesh();
 	void setup();

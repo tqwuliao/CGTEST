@@ -29,7 +29,7 @@ glm::mat4 GameObject::transform()
 		_transform = glm::mat4();
 		_transform = glm::translate(_transform, position);
 		_transform = glm::rotate(_transform, rotV.x - halfPI, xAxis);// 立起来！
-		_transform = glm::rotate(_transform, rotV.z - halfPI * 0.5f, zAxis); 
+		_transform = glm::rotate(_transform, rotV.z - halfPI * 0.0f, zAxis); 
 		_transform = glm::rotate(_transform, rotV.y, yAxis);
 		_transform = glm::scale(_transform, scl);
 	}

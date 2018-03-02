@@ -76,6 +76,21 @@ void DObject::draw(shader & _s)
 	//std::cout << model[0].x << model[1].x << model[2].x << std::endl;
 }
 
+void DObject::draw(shader & _s,int repeat)
+{
+	glm::mat4 model;
+
+	if (!this->model) return;
+	if (!visible) return;
+
+	/* relative transform */
+	model = transform();
+	//std::cout << model;
+	_s.bind("model", glm::value_ptr(model));
+	this->model->draw(_s,repeat);
+	//std::cout << model[0].x << model[1].x << model[2].x << std::endl;
+}
+
 void DObject::registAnimation(std::string filepath, std::string symbol)
 {
 	this->model->registAnimation(filepath, symbol);

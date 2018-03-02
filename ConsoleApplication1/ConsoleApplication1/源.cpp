@@ -23,6 +23,7 @@
 #include "DObject.h"
 #include "SObject.h"
 #include "Camera.h"
+#include "Light.h"
 #include "TextRenderer.h"
 #include "ParticleFactory.h"
 #include "Terrain.h"
@@ -50,7 +51,7 @@ float runRemain;
 glm::vec3 forward = glm::vec3(0.0f, 0.0f, -1.0f);
 GLfloat lastX = 400, lastY = 300;
 GLfloat yaw = 180.0f, pitch = 0.0f;
-glm::vec3 lightPos = glm::vec3(0.5f, 15.0f, 1.0f);
+glm::vec3 lightPos = glm::vec3(0.5f, 23.0f, 4.0f);
 glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 GLfloat backForce = 0.0f; //后坐力。。。
 GLfloat upForce = 0.0f; // jump
@@ -243,20 +244,25 @@ void gravity() {
 extern std::vector<glm::vec3> drops;
 extern int dropsize;
 extern ParticleUpdate testfunc;
+SObject* grasshost;
 
 void render()
 {
 	static shader * _shader,*_shader2,*screenShader,*skyboxshader,*shadowshader,*bloomshader,*tDshader,*wshader;
-	static shader *staticShader;
+	static shader *staticShader,*pShader,*shadowshader1;
 	//static Texture texture1(".\\resources\\container2.png");
 	//static Texture texture2(".\\resources\\container2_specular.png");
-	static GLuint FBO = -1,shadowFBO,shadowMap,blurFBO[2];
+	static GLuint FBO = 0,shadowFBO,shadowMap,shadowMap2,blurFBO[2];
 	static GLuint screen[3],rbo,blurMap[4];
 	static Texture floorTex("./resources/203668.jpg");
 	static Texture waterTex("./resources/waternormal.png");
 	static Texture waterTex2("./resources/waternormal2.png");
 	static UiClass mousePic(".\\resources\\mouse.png");
 	static Terrain terrain;
+	static glm::mat4 testArr[100];
+	static PointLight pointLight0;
+	static DirLight dirLight0;
+	static GLuint buffer;
 	
 	gravity();
 	GLfloat pitch = ::pitch + ::backForce;
@@ -279,9 +285,11 @@ void render()
 		screenShader = new shader(".\\GLSL\\vertex2.g.txt", ".\\GLSL\\scene.g.txt");
 		skyboxshader = new shader(".\\GLSL\\skyver.g.txt", ".\\GLSL\\skysha.g.txt");
 		shadowshader = new shader(".\\GLSL\\shadow.vs", ".\\GLSL\\shadow.fs", ".\\GLSL\\shadow.gs");
+		shadowshader1 = new shader(".\\GLSL\\shadow.1.vs", ".\\GLSL\\shadow.fs", ".\\GLSL\\shadow.gs");
 		bloomshader = new shader(".\\GLSL\\vertex2.g.txt", ".\\GLSL\\blur.txt");
 		tDshader = new shader(".\\GLSL\\ui.g.txt", ".\\GLSL\\ui.f.txt");
 		wshader = new shader(".\\GLSL\\watersky.v.txt", ".\\GLSL\\watersky.g.txt");
+		pShader = new shader(".\\GLSL\\plant.g.txt", ".\\GLSL\\color.g.txt");
 		//staticShader = new shader(".\\GLSL\\static.g.txt", ".\\GLSL\\color.g.txt");
 		ParticleFactory::_shader = new shader("./GLSL/pf.v.txt", "./GLSL/pf.f.txt", "./GLSL/pf.g.txt");
 		faces.push_back(".\\resources\\skybox\\right.jpg");
@@ -303,12 +311,21 @@ void render()
 		//ob1->animate(20);
 		DObject* ob2 = new DObject(*ob1);
 		DObject* ob = new DObject(*ob1);
+		grasshost = new SObject("./resources/flower.fbx");
+		//grasshost->rotationAngles.z = glm::radians(90.0f);
+		grasshost->position = { -0.0f,10.5,0 };
+		grasshost->visible = true;
+		grasshost->scale = { 0.1,0.1,0.1 };
+		//grasshost->rotationAngles.x = glm::radians(90.0f);
+		grasshost->rotationAngles.z = glm::radians(45.0f);
+		grasshost->castShadow = false;
 		//SObject* ob4 = new SObject("./resources/xrk.obj");
 		//SObject* ob5 = new SObject("./resources/xrk.obj");
 		//SObject* ob3 = new SObject("./resources/bio cha/chris.obj");
 		objects.push_back(ob);
 		objects.push_back(ob1);
 		objects.push_back(ob2);
+		//objects.push_back(grasshost);
 		//objects.push_back(ob4);
 		//objects.push_back(ob5);
 		//objects.push_back(ob3);
@@ -331,7 +348,7 @@ void render()
 
 		host = new Camera(0);
 		hero = ob;
-		hero->forward = { 0.7f,0,-0.6f };
+		hero->forward = { 0.0f,0,-0.6f };
 		host->forward = { 0,0,0 };
 
 		ob1->symbol = "LinLin";
@@ -358,11 +375,11 @@ void render()
 	//ob.position = cameraPos + glm::normalize(cameraUp - cameraFront*angle) * ((-3.6f)*1.1f) + cameraFront * 1.5;
 	
 	static GLuint skybox = loadCubemap(faces);
-	if (FBO == -1)
+	if (FBO == 0)
 	{
 		glGenFramebuffers(1, &FBO); // 帧缓冲
 		glBindFramebuffer(GL_FRAMEBUFFER, FBO);
-		const GLuint SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
+		const GLuint SHADOW_WIDTH = 4096, SHADOW_HEIGHT = 4096;
 		glGenTextures(3, screen);
 		for (int i = 0;i < 3;i++) // 生成三个纹理 原颜色，深度，亮光
 		{
@@ -371,6 +388,7 @@ void render()
 				Scwidth, Scheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 			glBindTexture(GL_TEXTURE_2D, 0);
@@ -396,6 +414,7 @@ void render()
 		glGenFramebuffers(1, &shadowFBO); // 新的帧缓冲，阴影
 		glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
 		glGenTextures(1, &shadowMap); // 生成一张盒形阴影贴图
+		glGenTextures(1, &shadowMap2); // 生成一张盒形阴影贴图
 		glBindTexture(GL_TEXTURE_CUBE_MAP, shadowMap);
 		for (GLuint i = 0; i < 6; ++i) // 6个面分别设置
 			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT,
@@ -406,7 +425,20 @@ void render()
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-		glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowMap, 0); // 绑定为深度缓存的记录
+		//glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowMap, 0); // 绑定为深度缓存的记录
+		
+		glBindTexture(GL_TEXTURE_2D, shadowMap2);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+			SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 4);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+		
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMap2, 0); // 绑定为深度缓存的记录
+
 		glDrawBuffer(GL_NONE); // 无输出
 		glReadBuffer(GL_NONE); 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -456,6 +488,40 @@ void render()
 			return true;
 
 		};
+
+		for (int i = 0;i < 100;i++) {
+			glm::mat4 model;
+			model = glm::translate(model, glm::vec3(i / 20.0, -rand() % 100 / 200.0 + 0.2f, i % 20));
+			model = glm::scale(model, glm::vec3(rand() % 100 / 200.0 + 0.4 , rand() % 100 / 200.0 + 0.4, rand() % 100 / 200.0 + 0.4));
+			model = glm::rotate(model, (float)(rand() % 100 / 33.0), glm::vec3(0, 1, 0));
+			
+			testArr[i] = model;
+		}
+
+		
+		glGenBuffers(1, &buffer);
+		glBindBuffer(GL_ARRAY_BUFFER, buffer);
+		glBufferData(GL_ARRAY_BUFFER, 100 * sizeof(glm::mat4), testArr, GL_STATIC_DRAW);
+		for each (auto& var in (static_cast<SObject*>(grasshost))->model->meshes)
+		{
+			glBindVertexArray(var->VAO);
+			glEnableVertexAttribArray(5);
+			glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
+			glEnableVertexAttribArray(6);
+			glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4)));
+			glEnableVertexAttribArray(7);
+			glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
+			glEnableVertexAttribArray(8);
+			glVertexAttribPointer(8, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * sizeof(glm::vec4)));
+
+			glVertexAttribDivisor(5, 1);
+			glVertexAttribDivisor(6, 1);
+			glVertexAttribDivisor(7, 1);
+			glVertexAttribDivisor(8, 1);
+
+			glBindVertexArray(0);
+		}
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
 	static GLuint quadArr = -1, quadVBO, skyboxVAO, skyboxVBO;
@@ -496,7 +562,7 @@ void render()
 		{
 			animate_thread(objects[2], "idle2", std::ref(AnimateTick));
 			//Animations[workNum++] = AnimationWork{ false,objects[2],"idle2",&AnimateTick,0 };
-		}
+		} 	
 		if (running)
 		{
 			//if (runRemain == 0) runRemain = 0.5;
@@ -536,11 +602,11 @@ void render()
 	}
 	// 画阴影。其实第一部分是设置光源、以及设置物体的位置，其实这部分可以摆在shader之前
 	shadowshader->run();
-	glViewport(0, 0, 2048, 2048);
+	glViewport(0, 0, 4096, 4096);
 	GLfloat near_plane = 1.0f, far_plane = 25.0f;
 	//glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
 	glm::mat4 lightProjection = glm::perspective(glm::radians(90.0f),1.0f, near_plane, far_plane);
-	
+	glm::mat4 lightOrtho = glm::ortho(-24.0f, 24.0f, -24.0f, 24.0f, near_plane, far_plane);
 	glm::mat4 model;
 	glStencilFunc(GL_ALWAYS, 1, 0xFF);
 	glStencilMask(0xFF);
@@ -557,6 +623,10 @@ void render()
 		glm::lookAt(lightPos, lightPos + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0)));
 	shadowTransforms.push_back(lightProjection *
 		glm::lookAt(lightPos, lightPos + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0)));
+	glm::mat4 shadowTransformation;
+	shadowTransformation = lightOrtho * glm::lookAt(
+		glm::vec3(-32 * 0.2f,-32 * -0.53f, -32 * -0.1f)+hero->position, 
+		glm::vec3(16 * 0.2f, 16 * -0.53f, 16 * -0.1f) + hero->position,glm::vec3(0,1.0f,-5.3f));
 	/*model = glm::translate(model, glm::vec3(0.0f, -0.75f, 0.0f)); // Translate it down a bit so it's at the center of the scene
 	model = glm::scale(model, glm::vec3(0.02f, 0.02f, 0.02f));	// It's a bit too big for our scene, so scale it down
 	glm::mat4 model2;
@@ -566,8 +636,8 @@ void render()
 	glm::mat4 model3;
 	
 	
-	model3 = glm::translate(model3, glm::vec3(0.0f, 7.25f, 0.0f)); // Translate it down a bit so it's at the center of the scene
-	model3 = glm::scale(model3, glm::vec3(100.0f, 1.0f, 100.0f));	// It's a bit too big for our scene, so scale it down
+	model3 = glm::translate(model3, glm::vec3(0.0f, 8.75f, 0.0f)); // Translate it down a bit so it's at the center of the scene
+	model3 = glm::scale(model3, glm::vec3(1.0f, 1.0f, 1.0f));	// It's a bit too big for our scene, so scale it down
 	model3 = glm::rotate(model3, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	//
 	
@@ -575,13 +645,18 @@ void render()
 	glm::mat4 model4;
 	model4 = glm::translate(model4, glm::vec3(0.0f, -2.75f, 0.0f)); 
 	model4 = glm::scale(model4, glm::vec3(1.0f, 1.0f, 1.0f));
+
+	glm::mat4 oneMat;
 	
-	shadowshader->bind("shadowMatrices", glm::value_ptr(shadowTransforms[0]),0);
+	
+	shadowshader->bind("shadowMatrices", glm::value_ptr(shadowTransformation),6);
+	shadowshader->bind("shadowMatrices", glm::value_ptr(shadowTransforms[0]), 0);
 	shadowshader->bind("shadowMatrices", glm::value_ptr(shadowTransforms[1]),1);
 	shadowshader->bind("shadowMatrices", glm::value_ptr(shadowTransforms[2]),2);
 	shadowshader->bind("shadowMatrices", glm::value_ptr(shadowTransforms[3]),3);
 	shadowshader->bind("shadowMatrices", glm::value_ptr(shadowTransforms[4]),4);
 	shadowshader->bind("shadowMatrices", glm::value_ptr(shadowTransforms[5]),5);
+	//shadowshader->bind("DirLight", 1);
 	shadowshader->bind("lightPos", lightPos);
 	lightPos.x = 3*glm::sin(glfwGetTime() / 10.0); // 动态光源233
 	lightPos.z = 3*glm::cos(glfwGetTime() / 10.0);
@@ -592,6 +667,7 @@ void render()
 
 	for (int i = 0; i < objects.size(); i++)
 	{
+		if (!objects[i]->castShadow) continue;
 		glm::vec3 pos1 = objects[i]->worldPos();
 		pos1 -= hero->worldPos();
 		pos1.y = 0;
@@ -604,9 +680,17 @@ void render()
 
 	shadowshader->bind("model", glm::value_ptr(model4));
 	terrain.updateGraphics(shadowshader); // 画地形的阴影
+
 	
-	glViewport(0, 0, Scwidth, Scheight);
+	shadowshader1->use();
+	shadowshader1->bind("shadowMatrices", glm::value_ptr(shadowTransformation), 6);
+	shadowshader1->bindF("far_plane", 25.0);
+	grasshost->draw(*shadowshader1, 100);
+	
 	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+	glViewport(0, 0, Scwidth, Scheight);
+	
+
 	glCullFace(GL_BACK); // don't forget to reset original culling face
 	//int pos = ((hero->position.x + 512) * 1024 + hero->position.z + 512);
 
@@ -668,45 +752,41 @@ void render()
 	glDepthMask(GL_TRUE);
 	glActiveTexture(GL_TEXTURE6);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, shadowMap);
+	glActiveTexture(GL_TEXTURE8);
+	glBindTexture(GL_TEXTURE_2D, shadowMap2);
 	_shader->bindF("far_plane",25.0);
+	_shader->bind("shadowMap2", 8);
 	_shader->bind("shadowMap", 6);
-
+	_shader->bind("dirLight.transform", glm::value_ptr(shadowTransformation));
+	_shader->bind("offsets[0]", glm::value_ptr(oneMat));
 	glActiveTexture(GL_TEXTURE9);
 	glBindTexture(GL_TEXTURE_2D, waterTex.id());
-	wshader->bind("waterMap", 9);
+	_shader->bind("waterMap", 9);
 
 	glActiveTexture(GL_TEXTURE10);
 	glBindTexture(GL_TEXTURE_2D, waterTex2.id());
-	wshader->bind("waterMap2", 10);
-	wshader->bindF("time", glfwGetTime() / 2.0);
+	_shader->bind("waterMap2", 10);
+	_shader->bindF("time", glfwGetTime() / 2.0);
 
 	host->bindCamera(*_shader);
-	const glm::vec3 ambient = { 0.08,0.08,0.08 };
-	const glm::vec3 diffuse = { 2.4,2.8,1.8 };
-	const glm::vec3 specular = { 2.8,2.8,2.0 };
-	if (lightArc < 1) lightArc += (lightArc / 100.0 + 0.0001); 
-	else if (lightArc < 2) lightArc += 0.004;
-	else lightArc = 0;
-	
-	_shader->bind("pointLight[0].ambient", ambient * ((lightArc-1)*(lightArc-1)+0.2f));
-	_shader->bind("pointLight[0].diffuse", diffuse * ((lightArc - 1)*(lightArc - 1) + 0.2f));
-	_shader->bind("pointLight[0].specular", specular * ((lightArc - 1)*(lightArc - 1) + 0.2f));
-	_shader->bind("pointLight[0].position", lightPos);
-	_shader->bindF("pointLight[0].constant", 1.0f);
-	_shader->bindF("pointLight[0].linear", 0.09);
-	_shader->bindF("pointLight[0].quadratic", 0.025);
+	const glm::vec3 ambient = { 0.18,0.18,0.18 };
+	const glm::vec3 diffuse = { 0.8,0.8,0.62 };
+	const glm::vec3 specular = { 0.8,0.8,0.65 };
+	lightArc = 2;
+	pointLight0.ambient = ambient * ((lightArc - 1)*(lightArc - 1));
+	pointLight0.diffuse = diffuse * ((lightArc - 1)*(lightArc - 1));
+	pointLight0.specular = specular * ((lightArc - 1)*(lightArc - 1));
+	pointLight0.position = lightPos;
+	pointLight0.constant = 1.0;
+	pointLight0.linear = 0.09;
+	pointLight0.quadratic = 0.0125;
+	//pointLight0.bindLight(*_shader, 0);
+	dirLight0.ambient = glm::vec3{ 0.05f,0.05f,0.05f };
+	dirLight0.specular = glm::vec3{ 0.4f,0.4f,0.4f };
+	dirLight0.diffuse = glm::vec3{ 0.5f,0.5f,0.5f };
+	dirLight0.position = glm::vec3{ 0.2f,-0.53f,-0.1f };
 	_shader->bindF("time", glfwGetTime());
-	_shader->bind("pointLight[1].ambient", 0.2f, 0.2f, 0.2f);
-	_shader->bind("pointLight[1].diffuse", 0.6f, 0.7f, 0.8f);
-	_shader->bind("pointLight[1].specular", 1.0f, 1.0f, 1.0f);
-	_shader->bind("pointLight[1].position", glm::vec3(1.0f));
-	_shader->bindF("pointLight[1].constant", 1.0f);
-	_shader->bindF("pointLight[1].linear", 0.09);
-	_shader->bindF("pointLight[1].quadratic", 0.032);
-	_shader->bind("dirLight.ambient", 0.12f,0.12f,0.12f);
-	_shader->bind("dirLight.diffuse", 0.1f,0.1f,0.1f);
-	_shader->bind("dirLight.specular", 0.1f,0.1f,0.1f);
-	_shader->bind("dirLight.direction", -0.2f,-1.0f,-0.3f);
+	dirLight0.bindLight(*_shader, 0);
 	
 	for (int i = 0; i < objects.size(); i++)
 	{
@@ -727,6 +807,18 @@ void render()
 	terrain.updateGraphics(_shader);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
+	pShader->run();
+	//pointLight0.bindLight(*pShader, 0);
+	dirLight0.bindLight(*pShader, 0);
+	pShader->bind("dirLight.transform", glm::value_ptr(shadowTransformation));
+	pShader->bindF("time", glfwGetTime());
+	pShader->bindF("near_plane", 1.0);
+	pShader->bindF("far_plane", 25.0);
+	pShader->bind("shadowMap", 6);
+	pShader->bind("shadowMap2", 8);
+	host->bindCamera(*pShader);
+	grasshost->draw(*pShader, 100);
+
 	glDisable(GL_CULL_FACE);
 	wshader->run();
 	wshader->bind("model", glm::value_ptr(model3));
@@ -742,10 +834,11 @@ void render()
 	wshader->bind("waterMap2", 2);
 	wshader->bindF("time", glfwGetTime()/2.0);
 
-	glBindVertexArray(quadArr);
+	terrain.updateGraphics(wshader);
+	/*glBindVertexArray(quadArr);
 	
 	glDrawArrays(GL_TRIANGLES, 0, 6); // 画天空盒
-	glBindVertexArray(0);
+	glBindVertexArray(0);*/
 	glEnable(GL_CULL_FACE);
 
 	glDepthMask(GL_FALSE);
@@ -878,7 +971,7 @@ void movement()
 	running = false;
 	bump = 0;
 	static glm::vec3 cameraWorldPos[10];
-	host->position = glm::vec3{-10,5,14} + cameraWorldPos[0];
+	host->position = glm::vec3{0,4,10} + cameraWorldPos[0];
 	for (int i = 9;i > 0;i--)
 		cameraWorldPos[i] = cameraWorldPos[i - 1];
 	cameraWorldPos[0] = hero->position;
@@ -918,7 +1011,14 @@ void movement()
 		lastDir = glm::normalize(glm::cross(hero->forward, host->Up));
 		if (cameraSpeed < MaxcameraSpeed) cameraSpeed += 0.05f;
 	}
-
+	if (key[GLFW_KEY_Q])
+	{
+		hero->model->headangle += 0.2f;
+	}
+	if (key[GLFW_KEY_E])
+	{
+		hero->model->headangle -= 0.2f;
+	}
 	if (!running)
 	{
 		if (cameraSpeed > 0) {
@@ -942,14 +1042,14 @@ void movement()
 		else if (!hidden) upForce = -0.02f;
 		hidden = !hidden;
 	}
-	if (key[GLFW_KEY_Q]) {
+	/*if (key[GLFW_KEY_Q]) {
 		for (int i = 0; i < objects.size(); i++)
 		{
 			for(int n = 0;n < 3;n++)
 				std::cout << objects[i]->position[n] << " ";
 			std::cout << "\n";
 		}
-	}
+	}*/
 
 	if (key[GLFW_KEY_UP])
 	{
@@ -967,6 +1067,15 @@ void movement()
 	{
 		changePos.x += 1.0;
 	}
+	/*if (key[GLFW_KEY_Q]) {
+		grasshost->rotationAngles.x += 0.01;
+	}
+	if (key[GLFW_KEY_E]) {
+		grasshost->rotationAngles.y += 0.01;
+	}
+	if (key[GLFW_KEY_R]) {
+		grasshost->rotationAngles.z += 0.01;
+	}*/
 	//if (key[GLFW_KEY_Q]) std::cout << cameraFront.z << std::endl;
 	//if (key[GLFW_KEY_0]) lightPos += cameraSpeed * cameraFront;
 	bool collitest = false;

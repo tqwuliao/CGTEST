@@ -23,6 +23,7 @@ public:
 	the shader must have a model specified to be a unique
 	*/
 	void draw(shader& _s);
+	void draw(shader & _s, int repeat);
 	void registAnimation(std::string filepath, std::string symbol);
 	void prepare() { model->prepare(); };
 	/*
@@ -38,10 +39,10 @@ public:
 	* @return[bool] : is the point in the Cylinder defined by center(position) and size(radius)
 	*/
 	//virtual bool collisionTest(glm::vec3 nowPos, std::function<void(RObject*)> func);
-
+	std::shared_ptr<Model> model;
 	~DObject();
 private:
-	std::shared_ptr<Model> model;
+	
 	float animateCount = 0;
 	DObject& operator=(const DObject&) {};
 };

@@ -32,10 +32,10 @@ Camera::Camera(GameObject* par) :
 	fov(45.0f),
 	Target({0,0,0}),
 	Direction(glm::normalize(Pos - Target)),
-	Front(10.f,-5.0f,-14.0f),
+	Front(0.f,-1.0f,-5.0f),
 	Up(0,1.0f,0)
 {
-	position = { -10.0f,5.00f,14.0f };
+	position = { 0.0f,4.00f,10.0f };
 }
 
 

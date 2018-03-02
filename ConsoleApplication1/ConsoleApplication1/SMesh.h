@@ -29,11 +29,13 @@ public:
 	SMesh(SVertex v[], int vl, GLuint g[], int gl);
 	SMesh();
 	virtual void Draw(shader& Shader);
+	void Draw(shader & Shader, int repeat);
 	void reMesh(SVertex v[], int vl);
 	~SMesh();
+	GLuint VAO, VBO, EBO;
 	void setup();
 protected:
-	GLuint VAO, VBO, EBO;
+	
 	glm::mat4 transform;
 };
 

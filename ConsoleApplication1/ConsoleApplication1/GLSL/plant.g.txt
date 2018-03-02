@@ -4,13 +4,13 @@ layout (location = 1) in vec3 normal;
 layout (location = 2) in vec2 texCoords;
 layout (location = 3) in ivec4 BoneIDs;
 layout (location = 4) in vec4 Weights;
+layout (location = 5) in mat4 instanceMatrix;
 
 out vec3 FragPos;
 out vec3 Normal;
 out vec2 TexCoords;
 out vec4 test;
 out float hit;
-out vec2 scPos;
 //out vec4 FragPosLightSpace;
 out VS_OUT {
     vec2 texCoords;
@@ -26,7 +26,6 @@ uniform mat4 Tinverse;
 uniform vec3 cameraPos;
 uniform vec3 cameraDir;
 uniform bool dynamic;
-uniform mat4 offsets[100];
 
 uniform sampler2D waterMap;
 uniform sampler2D waterMap2;
@@ -53,8 +52,7 @@ void main()
        PosL = vec4(position,1.0);
     }
     mat4 vp = projection * view;
-    vec4 worldPos = offsets[gl_InstanceID] * model * PosL;
-    worldPos.z += gl_InstanceID;
+    vec4 worldPos = instanceMatrix * model * PosL;
     gl_Position = vp * worldPos;//projection * view * model * vec4(PosL.xyz,1.0);
     
     if(worldPos.y < 7.10) {
@@ -74,8 +72,8 @@ void main()
     }
 
     //gl_Position = PosL;
-    Normal =  mat3(transpose(inverse(model))) * normal;
-    vec4 _n = transpose(inverse(BoneTransform)) * vec4(Normal,1.0);
+    Normal =  mat3(transpose(inverse(instanceMatrix * model))) * normal;
+    vec4 _n = BoneTransform * vec4(Normal,1.0);
     Normal = _n.xyz;
     FragPos = worldPos.xyz;
     TexCoords = texCoords;
@@ -83,7 +81,6 @@ void main()
     vs_out.texCoords = texCoords;
     vs_out.normal = Normal;
     vs_out.fragPos = FragPos;
-    scPos = gl_Position.xy;
     //test = vec4((BoneTransform*gl_Position).xyz,1.0);
     //test += vec4(1.0);
     //test /= 2.0;

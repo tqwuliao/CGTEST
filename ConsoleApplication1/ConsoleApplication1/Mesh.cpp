@@ -11,12 +11,18 @@ Mesh::Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, std::vecto
 	textures(textures), shininess(16.0f),
 	VAO(0),
 	VBO(0),
-	EBO(0)
+	EBO(0),
+	opacityhas(false),
+	normalhas(false)
 {
 	setup();
 }
 
-Mesh::Mesh(Vertex v[],int vl, GLuint g[],int gl)
+Mesh::Mesh(Vertex v[],int vl, GLuint g[],int gl) :
+	VAO(0), VBO(0), EBO(0),
+	opacityhas(false),
+	normalhas(false),
+	shininess(16.0f)
 {
 	vertices.resize(vl);
 	for (int i = vl-1;i >= 0;i--)
@@ -64,6 +70,38 @@ void Mesh::Draw(shader& Shader)
 	// Draw mesh
 	glBindVertexArray(this->VAO);
 	glDrawElements(GL_TRIANGLES, this->indices.size(), GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+}
+
+void Mesh::Draw(shader& Shader,int repeat)
+{
+	GLuint diffuseNr = 1;
+	GLuint specularNr = 1;
+	for (GLuint i = 0; i < this->textures.size(); i++)
+	{
+		glActiveTexture(GL_TEXTURE0 + i); // Activate proper texture unit before binding
+										  // Retrieve texture number (the N in diffuse_textureN)
+		stringstream ss;
+		string number;
+		string name = this->textures[i]->type;
+		if (name == "texture_diffuse")
+			ss << diffuseNr++; // Transfer GLuint to stream
+		else if (name == "texture_specular")
+			ss << specularNr++; // Transfer GLuint to stream
+		else
+			ss << "1";
+		number = "material." + name + ss.str();
+
+		Shader.bind(number.data(), i);
+		glBindTexture(GL_TEXTURE_2D, this->textures[i]->id());
+	}
+	Shader.bind("dynamic", 1);
+	Shader.bind("material.normalhas", this->normalhas);
+	Shader.bind("material.opacity", this->opacityhas);
+	Shader.bindF("material.shininess", this->shininess);
+	// Draw mesh
+	glBindVertexArray(this->VAO);
+	glDrawElementsInstanced(GL_TRIANGLES, this->indices.size(), GL_UNSIGNED_INT, 0,repeat);
 	glBindVertexArray(0);
 }
 

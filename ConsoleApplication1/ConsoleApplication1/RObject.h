@@ -10,11 +10,13 @@ class RObject : public GameObject
 {
 public:
 	bool visible;
-	RObject(GameObject* par=nullptr) : GameObject(par),radiusA(0),radiusB(0) {};
+	bool castShadow;
+	RObject(GameObject* par=nullptr) : GameObject(par),radiusA(0),radiusB(0),castShadow(true) {};
 	RObject(const RObject& or,GameObject* par=nullptr) : 
 		GameObject(par),
 		radiusA(or.radiusA),
-		radiusB(or.radiusB)
+		radiusB(or.radiusB),
+		castShadow(or.castShadow)
 	{};
 	~RObject() {};
 	/* 
@@ -25,6 +27,7 @@ public:
 	float radiusA,radiusB;
 	std::function<void(RObject&, RObject&)> collisionA, collisionB;
 	virtual void draw(shader &_s) = 0;
+	virtual void draw(shader &_s,int repeat) = 0;
 	virtual void animate(std::string symbol, float & m) {};
 	virtual void blend(std::string end, float & m, float per) {  };
 	virtual void prepare() {};

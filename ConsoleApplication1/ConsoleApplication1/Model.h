@@ -42,11 +42,13 @@ class Model
 {
 public:
 	std::vector<std::shared_ptr<Mesh>> meshes; // Mesh reuseable.
+	float headangle=0;
 	Model(const GLchar* path);
 	Model(const Model& model);
 	typedef std::map < std::string, Anim_Res > _aniBuffer;
 	std::shared_ptr<_aniBuffer> aniBuffer;
 	void draw(shader& Shader);
+	void draw(shader & Shader, int repeat);
 	void animate(std::string symbol,float & tick);
 	void animate(float & tick);
 	void blend(std::string end, float & tick, float percent);
@@ -57,6 +59,7 @@ private:
 	Anims* anims; // The animation being played right now
 	Anims blending; // The destination of a blending.
 	GLuint cSize;
+	int headPos;
 	std::string directory;
 	std::string _path;
 	std::string now_play;

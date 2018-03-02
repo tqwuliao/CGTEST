@@ -1,5 +1,5 @@
 #version 420 core
-layout (location = 0) in vec2 position;
+layout (location = 0) in vec3 position;
 layout (location = 1) in vec2 texcoords;
 out vec3 TexCoords;
 out vec2 tex;
@@ -15,9 +15,13 @@ uniform float time;
 
 void main()
 {
-    vec4 worldPos = model * vec4(position,0.0,1.0);
+    vec4 worldPos = model * vec4(position.xz,0.0,1.0);
     tex = (worldPos.xz / 8.0 + vec2(cos(time/5.0),time/4.0));
-    //worldPos.y += 2.0-normalize(1*texture(waterMap,tex).rgb+vec3(-1.0,-1.0,-1.0)+1*texture(waterMap2,tex+vec2(-time/4.0,time)).rgb).g/1.0;
+    vec3 Normal = normalize(0.8*texture(waterMap,tex).rgb+
+                    0.5*texture(waterMap2,tex+vec2(sin(time/5.0),-cos(time/5.0))).rgb+
+                    0.3*texture(waterMap,tex+vec2(sin(time/8.0),-cos(time/4.0))).rgb+
+                    0.2*texture(waterMap,tex/2.0+vec2(cos(time/8.0),-cos(1-time/16.0))).rgb);
+    worldPos.y += 0.25-normalize(Normal).g/4.0;
     gl_Position = projection * view * worldPos;
     TexCoords = worldPos.xyz-cameraPos;
 }

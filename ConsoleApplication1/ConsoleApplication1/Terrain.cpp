@@ -4,18 +4,21 @@ int Terrain::TerrainSize = 1024;
 
 SVertex* Terrain::generateWaterFace(SVertex* ori,const char* data)
 {
+	
 	if (ori == NULL)
 	{
 		const int size = 1024; // 可以改成TerrianSize
+		
 		heightMap = Texture::loadHeightMap(".\\resources\\heightMap.png");
 		ori = new SVertex[size*size];
+		cache = ori;
 		for (int i = 0;i < size;i++)
 		{
 			for (int j = 0;j < size;j++)
 			{
 				float add = 0;//(rand() % 100) / 200.0;
-				ori[i * size + j].Position = { (i)-(size / 2),
-					heightMap[(i*size + j) * 3] / 20.0,(j)-(size / 2) };
+				ori[i * size + j].Position = { ((i)-(size / 2))/10.0,
+					heightMap[(i*size + j) * 3] / 32.0 + 10,((j)-(size / 2)) / 10.0 };
 				
 				
 				ori[i * size + j].Normal = { 0,1,0 };
@@ -27,6 +30,22 @@ SVertex* Terrain::generateWaterFace(SVertex* ori,const char* data)
 			for (int j = 1;j < size - 1;j++)
 			{
 				glm::vec3 nTmp = { 0,0,0 };
+
+				ori[i * size + j].Position = { ((i)-(size / 2)) / 10.0,
+					(heightMap[(i*size + j+1) * 3] * 4+
+						heightMap[(i*size + j-1) * 3] *4+
+						heightMap[(i*size + j+size) * 3] *4+
+						heightMap[(i*size + j-size) * 3] *4+
+						heightMap[(i*size + j + 1 + size) * 3] +
+						heightMap[(i*size + j - 1 - size) * 3] +
+						heightMap[(i*size + j + size - 1) * 3]  +
+						heightMap[(i*size + j - size + 1) * 3]  +
+						heightMap[(i*size + j) * 3] * 8) / 32.0 / 28.0 + 6,((j)-(size / 2)) / 10.0 };
+
+
+				ori[i * size + j].Normal = { 0,1,0 };
+				ori[i * size + j].TexCoords = { i / 8.0 ,j / 8.0};
+
 				nTmp += glm::cross(ori[i*size + j].Position - ori[i*size + j + size].Position,
 					ori[i*size + j].Position - ori[i*size + j - 1].Position);
 				nTmp += glm::cross(ori[i*size + j].Position - ori[i*size + j - 1].Position,
@@ -58,6 +77,7 @@ SVertex* Terrain::generateWaterFace(SVertex* ori,const char* data)
 		}
 		return ori;
 	}
+
 	return ori;
 }
 

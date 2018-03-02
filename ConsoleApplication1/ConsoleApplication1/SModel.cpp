@@ -27,6 +27,14 @@ void SModel::draw(shader& Shader)
 		this->meshes[i]->Draw(Shader);
 }
 
+void SModel::draw(shader& Shader,int repeat)
+{
+	char tmp[32];
+
+	for (GLuint i = 0; i < this->meshes.size(); i++)
+		this->meshes[i]->Draw(Shader,repeat);
+}
+
 
 SModel::~SModel()
 {
@@ -100,19 +108,23 @@ SMesh* SModel::generateMesh(aiMesh * content, const aiScene * scene, const int B
 	if (content->mMaterialIndex >= 0)
 	{
 		aiMaterial* material = scene->mMaterials[content->mMaterialIndex];
-		std::vector<std::shared_ptr<Texture>> diffuseMaps, specularMaps, normalMaps, opacityMaps;
+		std::vector<std::shared_ptr<Texture>> diffuseMaps, specularMaps, normalMaps, ambientMaps, opacityMaps;
 		diffuseMaps = loadMaterialTextures(material,
 			aiTextureType_DIFFUSE, "texture_diffuse");
 		specularMaps = loadMaterialTextures(material,
-			aiTextureType_AMBIENT, "texture_specular");
+			aiTextureType_SPECULAR, "texture_specular");
+
 		normalMaps = loadMaterialTextures(material,
 			aiTextureType_HEIGHT, "normalMap");
 		opacityMaps = loadMaterialTextures(material,
 			aiTextureType_OPACITY, "opacityMap");
+		ambientMaps = loadMaterialTextures(material,
+			aiTextureType_AMBIENT, "texture_ambient");
 		textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
 		textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
 		textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
 		textures.insert(textures.end(), opacityMaps.begin(), opacityMaps.end());
+		textures.insert(textures.end(), ambientMaps.begin(), ambientMaps.end());
 		if (normalMaps.size() > 0)
 			normalhas = true;
 		if (opacityMaps.size() > 0)
@@ -138,7 +150,9 @@ std::vector<std::shared_ptr<Texture>> SModel::loadMaterialTextures(aiMaterial* m
 		if (std::string(str.C_Str()) == "*0") str.Set("0.dds");
 
 		std::cout << " Try to Fetch " << str.C_Str() << std::endl;
-		std::string path = (this->directory + str.C_Str());
+		std::string tmp = str.C_Str();
+		while (tmp[0] == '.' || tmp[0] == '/') tmp = tmp.data() + 1;
+		std::string path = (this->directory + "/" + tmp);
 		Texture* find = CacheManager<Texture>::Instance().getResource(path);
 		if (find)
 		{

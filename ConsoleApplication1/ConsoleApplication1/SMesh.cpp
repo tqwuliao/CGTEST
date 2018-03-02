@@ -73,6 +73,38 @@ void SMesh::Draw(shader& Shader)
 	glBindVertexArray(0);
 }
 
+void SMesh::Draw(shader& Shader,int repeat)
+{
+	GLuint diffuseNr = 1;
+	GLuint specularNr = 1;
+	for (GLuint i = 0; i < this->textures.size(); i++)
+	{
+		glActiveTexture(GL_TEXTURE0 + i); // Activate proper texture unit before binding
+										  // Retrieve texture number (the N in diffuse_textureN)
+		stringstream ss;
+		string number;
+		string name = this->textures[i]->type;
+		if (name == "texture_diffuse")
+			ss << diffuseNr++; // Transfer GLuint to stream
+		else if (name == "texture_specular")
+			ss << specularNr++; // Transfer GLuint to stream
+		else
+			ss << "1";
+		number = "material." + name + ss.str();
+
+		Shader.bind(number.data(), i);
+		glBindTexture(GL_TEXTURE_2D, this->textures[i]->id());
+	}
+	Shader.bind("dynamic", 0);
+	Shader.bind("material.normalhas", this->normalhas);
+	Shader.bind("material.opacity", this->opacityhas);
+	Shader.bindF("material.shininess", this->shininess);
+	// Draw mesh
+	glBindVertexArray(this->VAO);
+	glDrawElementsInstanced(GL_TRIANGLES, this->indices.size(), GL_UNSIGNED_INT, 0, repeat);
+	glBindVertexArray(0);
+}
+
 void SMesh::reMesh(SVertex v[], int vl)
 {
 	vertices.resize(vl);

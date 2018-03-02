@@ -8,16 +8,21 @@ unsigned char* Texture::loadHeightMap(const char *file)
 {
 	static int _w, _h, _c;
 	return SOIL_load_image(file, &_w, &_h, &_c, 3);
+
 }
 
 Texture::Texture(const char *file)
 	:type(""),path(""),filename(file)
 {
 	//T1
-	TextureID = SOIL_load_OGL_texture(file, SOIL_LOAD_RGBA, SOIL_CREATE_NEW_ID,SOIL_FLAG_DDS_LOAD_DIRECT);
+	TextureID = SOIL_load_OGL_texture(file, SOIL_LOAD_RGBA,SOIL_CREATE_NEW_ID,SOIL_FLAG_DDS_LOAD_DIRECT);
+	if (TextureID == 0) printf(SOIL_last_result());
 	glBindTexture(GL_TEXTURE_2D, TextureID);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 4);
 	/*glGenTextures(1, &TextureID);
 	glBindTexture(GL_TEXTURE_2D, TextureID);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);

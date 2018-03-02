@@ -16,14 +16,16 @@ uniform float time;
 
 void main()
 {
+    const float _ParallaxScale = 0.5f;
     // Ambient
      vec3 Normal = normalize(0.8*texture(waterMap,tex).rgb+
                     0.5*texture(waterMap2,tex+vec2(sin(time/5.0),-cos(time/5.0))).rgb+
                     0.3*texture(waterMap,tex+vec2(sin(time/8.0),-cos(time/4.0))).rgb+
                     0.2*texture(waterMap,tex/2.0+vec2(cos(time/8.0),-cos(1-time/16.0))).rgb);
+     
      color = vec4(texture(skybox,reflect(TexCoords,Normal)).rgb,1.0);
-     color *= vec4(0.9,0.9,1.0,0.52);
-     color *= abs(dot(Normal,vec3(-0.2,0.53,0.1))) * 0.9 + 0.1 ;
+     color *= vec4(0.9,1.0,0.90,1.0);
+     color *= abs(dot(Normal,vec3(-0.2,0.53,0.1))) * 2.0 + 0.2 ;
      color.a = 0.82;
      //color *= vec4(texture(waterMap,texcoords).rgb,1.0);
      //color = vec4(0,0.6,0.8,1.0);

@@ -19,6 +19,9 @@ public:
 	the shader must have a model specified to be a unique
 	*/
 	void draw(shader& _s);
+
+	void draw(shader & _s, int repeat);
+	
 	/*
 	* Collision Test
 	* @param[glm::vec3 nowPos] : the point need to test
@@ -33,8 +36,9 @@ public:
 	*/
 	//virtual bool collisionTest(glm::vec3 nowPos, std::function<void(RObject*)> func);
 	~SObject();
-private:
 	std::shared_ptr<SModel> model;
+private:
+	
 
 	SObject& operator=(const SObject&) {};
 };

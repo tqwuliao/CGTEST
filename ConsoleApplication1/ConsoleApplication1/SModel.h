@@ -14,6 +14,7 @@ public:
 	SModel(const GLchar* path);
 	SModel(const SModel& model);
 	void draw(shader& Shader);
+	void draw(shader & Shader, int repeat);
 	~SModel();
 private:
 	std::string directory;
