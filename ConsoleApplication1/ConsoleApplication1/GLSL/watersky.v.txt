@@ -16,12 +16,13 @@ uniform float time;
 void main()
 {
     vec4 worldPos = model * vec4(position.xz,0.0,1.0);
-    tex = (worldPos.xz / 8.0 + vec2(cos(time/5.0),time/4.0));
+    tex = (worldPos.xz / 8.0 + vec2(cos(time/5.0),time/4.0)) / 2.0;
     vec3 Normal = normalize(0.8*texture(waterMap,tex).rgb+
                     0.5*texture(waterMap2,tex+vec2(sin(time/5.0),-cos(time/5.0))).rgb+
                     0.3*texture(waterMap,tex+vec2(sin(time/8.0),-cos(time/4.0))).rgb+
                     0.2*texture(waterMap,tex/2.0+vec2(cos(time/8.0),-cos(1-time/16.0))).rgb);
-    worldPos.y += 0.25-normalize(Normal).g/4.0;
+    worldPos.xyz += normalize(Normal)/4.0;
     gl_Position = projection * view * worldPos;
-    TexCoords = worldPos.xyz-cameraPos;
+    TexCoords = worldPos.xyz - cameraPos.xyz;
+
 }

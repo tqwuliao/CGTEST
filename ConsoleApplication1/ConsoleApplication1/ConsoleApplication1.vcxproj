@@ -153,6 +153,9 @@
     <ClCompile Include="CacheManager.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="DObject.cpp" />
+    <ClCompile Include="EventSequence.cpp" />
+    <ClCompile Include="GameHero.cpp" />
+    <ClCompile Include="GameMap.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="Mesh.cpp" />
@@ -173,6 +176,9 @@
     <ClInclude Include="CacheManager.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="DObject.h" />
+    <ClInclude Include="EventSequence.h" />
+    <ClInclude Include="GameHero.h" />
+    <ClInclude Include="GameMap.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="Mesh.h" />

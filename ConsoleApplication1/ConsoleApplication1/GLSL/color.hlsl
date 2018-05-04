@@ -16,6 +16,7 @@ bool opacity;
 struct DirLight {
 vec3 direction;
 vec3 ambient;
+float far;
 vec3 diffuse;
 vec3 specular;
 mat4 transform;
@@ -109,23 +110,23 @@ float Shadow2Calculation(DirLight light,vec3 fragPos)
      if(fragToLight.w != 0) fragToLight /= fragToLight.w;
     fragToLight = fragToLight * 0.5 + vec4(0.5,0.5,0.5,0.5);
     // Now get current linear depth as the length between the fragment and light position
-    float currentDepth = fragToLight.z * far_plane;
+    float currentDepth = fragToLight.z * light.far;
     // Now test for shadows
     float shadow = 0.0;
-float bias = 0.05;
+float bias = 0.1;
 int samples = 9;
 float viewDistance = length(viewPos - fragPos);
-float diskRadius = 0.0005;
-for(int i = 0; i < 9; ++i)
+float diskRadius = 0.0002;
+for(int i = 0; i < 12; ++i)
 {
-    vec2 tmp =  fragToLight.xy + sampleOffsetDirections2[i] * diskRadius;
+    vec2 tmp =  fragToLight.xy + sampleOffsetDirections2[i > 8 ? 8 : i] * diskRadius;
     float closestDepth = texture(shadowMap2,tmp).r;
-    closestDepth *= far_plane;   // Undo mapping [0;1]
-    if( fragToLight.z < 1.0 && currentDepth - bias > closestDepth)
+    closestDepth *= light.far;   // Undo mapping [0;1]
+    if( currentDepth - bias > closestDepth)
         shadow += 1.0;
 }
 
-shadow /= float(9); 
+shadow /= float(12); 
 return shadow; 
 }  
 
@@ -192,8 +193,7 @@ void main()
     FragColor = vec4(result,1);
     float z = gl_FragCoord.z * 2.0 - 1.0; // Back to NDC 
     z = (2.0 * 1.0 * far_plane) / (far_plane + 1.0 - z * (far_plane - 1.0)) ;	
-    //z = ( z - 1.0 ) / (far_plane - 1.0);
-    Far = vec4(0,0,0,gl_FragCoord.z);
+    Far = vec4(FragPos,gl_FragCoord.z);
     
     if(material.opacity) 
     { 
@@ -202,7 +202,7 @@ void main()
     if(z > far_plane - 0.0625) FragColor.a = mix(FragColor.a,0,(0.0625+z-far_plane)*16);
     float brightness = dot(FragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
     if(brightness > 0.85) //BrightColor = vec4(0.5);
-        BrightColor = vec4(FragColor.rgb/2, 1.0); else BrightColor = vec4(0,0,0,1.0);
+        BrightColor = vec4(FragColor.rgb, 1.0); else BrightColor = vec4(0.0);
     //FragColor = vec4(vec3(texture(shadowMap2,scPos/2.0+vec2(0.5)).r),1.0);
     //FragColor = vec4(dirLight.diffuse,1.0);
 }

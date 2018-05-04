@@ -72,6 +72,15 @@
     <ClCompile Include="Light.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="GameMap.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="EventSequence.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="GameHero.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="shader.h">
@@ -126,6 +135,15 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Light.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="GameMap.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="EventSequence.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="GameHero.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

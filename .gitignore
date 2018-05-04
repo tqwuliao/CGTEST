@@ -28,7 +28,10 @@ lib2/
 *.tmp
 *.log
 *.rar
+*.psd
+*.tif
 *.zip
+PBR/
 !Pic/*.jpg
 
 # Windows image file caches

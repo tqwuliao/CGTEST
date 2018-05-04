@@ -1,6 +1,7 @@
 #pragma once
 #include "shader.h"
 #include "GameObject.h"
+#include "EventSequence.h"
 #include <functional>
 
 // interface
@@ -11,6 +12,7 @@ class RObject : public GameObject
 public:
 	bool visible;
 	bool castShadow;
+	//EventSequence eventSeq;
 	RObject(GameObject* par=nullptr) : GameObject(par),radiusA(0),radiusB(0),castShadow(true) {};
 	RObject(const RObject& or,GameObject* par=nullptr) : 
 		GameObject(par),
@@ -33,6 +35,9 @@ public:
 	virtual void prepare() {};
 	virtual void destroy() {};
 	virtual void playAnimation(const std::string& type) {};
+	void updateEvent() {
+		//eventSeq.update(this);
+	}
 	void updateGraphics(shader * Shader) { this->draw(*Shader); }
 	/*
 	* Collision Test

@@ -57,7 +57,7 @@ void main()
     worldPos.z += gl_InstanceID;
     gl_Position = vp * worldPos;//projection * view * model * vec4(PosL.xyz,1.0);
     
-    if(worldPos.y < 7.10) {
+    /*if(worldPos.y < 7.10) {
         
        vec3 diff_ = worldPos.xyz - cameraPos;
        vec3 hitpos = mix(cameraPos,worldPos.xyz,(cameraPos.y-7.10)/(cameraPos.y-worldPos.y));
@@ -71,7 +71,7 @@ void main()
        //newdir /= newdir.x;
        vec3 newpos = mix(hitpos,worldPos.xyz,waterNormal);
       gl_Position = vp * vec4(newpos,1.0);
-    }
+    }*/
 
     //gl_Position = PosL;
     Normal =  mat3(transpose(inverse(model))) * normal;

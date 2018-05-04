@@ -50,7 +50,7 @@ bool running;
 float runRemain;
 glm::vec3 forward = glm::vec3(0.0f, 0.0f, -1.0f);
 GLfloat lastX = 400, lastY = 300;
-GLfloat yaw = 180.0f, pitch = 0.0f;
+GLfloat yaw = 0.0f, pitch = 0.0f;
 glm::vec3 lightPos = glm::vec3(0.5f, 23.0f, 4.0f);
 glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 GLfloat backForce = 0.0f; //后坐力。。。
@@ -245,6 +245,7 @@ extern std::vector<glm::vec3> drops;
 extern int dropsize;
 extern ParticleUpdate testfunc;
 SObject* grasshost;
+Terrain* terrain;
 
 void render()
 {
@@ -258,11 +259,11 @@ void render()
 	static Texture waterTex("./resources/waternormal.png");
 	static Texture waterTex2("./resources/waternormal2.png");
 	static UiClass mousePic(".\\resources\\mouse.png");
-	static Terrain terrain;
 	static glm::mat4 testArr[100];
 	static PointLight pointLight0;
 	static DirLight dirLight0;
 	static GLuint buffer;
+	static GLuint quadArr = -1, quadVBO, skyboxVAO, skyboxVBO;
 	
 	gravity();
 	GLfloat pitch = ::pitch + ::backForce;
@@ -280,16 +281,17 @@ void render()
 	
 	if (!_shader) // 初始化 可以后面单独提出一个方法
 	{
-		_shader = new shader(".\\GLSL\\vertex.g.txt", ".\\GLSL\\color.g.txt");
+		terrain = new Terrain();
+		_shader = new shader(".\\GLSL\\vertex.hlsl", ".\\GLSL\\color.hlsl");
 		//_shader2 = new shader(".\\GLSL\\vertex.g.txt", ".\\GLSL\\light.g.txt");
-		screenShader = new shader(".\\GLSL\\vertex2.g.txt", ".\\GLSL\\scene.g.txt");
+		screenShader = new shader(".\\GLSL\\vertex2.g.txt", ".\\GLSL\\scene.hlsl");
 		skyboxshader = new shader(".\\GLSL\\skyver.g.txt", ".\\GLSL\\skysha.g.txt");
 		shadowshader = new shader(".\\GLSL\\shadow.vs", ".\\GLSL\\shadow.fs", ".\\GLSL\\shadow.gs");
 		shadowshader1 = new shader(".\\GLSL\\shadow.1.vs", ".\\GLSL\\shadow.fs", ".\\GLSL\\shadow.gs");
-		bloomshader = new shader(".\\GLSL\\vertex2.g.txt", ".\\GLSL\\blur.txt");
+		bloomshader = new shader(".\\GLSL\\vertex2.g.txt", ".\\GLSL\\blur.hlsl");
 		tDshader = new shader(".\\GLSL\\ui.g.txt", ".\\GLSL\\ui.f.txt");
 		wshader = new shader(".\\GLSL\\watersky.v.txt", ".\\GLSL\\watersky.g.txt");
-		pShader = new shader(".\\GLSL\\plant.g.txt", ".\\GLSL\\color.g.txt");
+		pShader = new shader(".\\GLSL\\plant.g.txt", ".\\GLSL\\color.hlsl");
 		//staticShader = new shader(".\\GLSL\\static.g.txt", ".\\GLSL\\color.g.txt");
 		ParticleFactory::_shader = new shader("./GLSL/pf.v.txt", "./GLSL/pf.f.txt", "./GLSL/pf.g.txt");
 		faces.push_back(".\\resources\\skybox\\right.jpg");
@@ -299,11 +301,7 @@ void render()
 		faces.push_back(".\\resources\\skybox\\back.jpg");
 		faces.push_back(".\\resources\\skybox\\front.jpg");
 
-		/*waterfloor = generateWaterFace(waterfloor);
-		waterFace = new SMesh(waterfloor, 1024 * 1024, waterindex, 1023 * 1023 * 6);
-		waterFace->setup();*/
-		std::cout << "FLoor Id " << floorTex.id() << std::endl;
-
+		
 		DObject* ob1 = new DObject("./resources/Jarvan/run.DAE");//new DObject("./resources/bio cha/chris.obj");
 		ob1->radiusA = 2.5f;
 		ob1->radiusB = 4.0f;
@@ -313,29 +311,31 @@ void render()
 		DObject* ob = new DObject(*ob1);
 		grasshost = new SObject("./resources/flower.fbx");
 		//grasshost->rotationAngles.z = glm::radians(90.0f);
-		grasshost->position = { -0.0f,10.5,0 };
+		grasshost->position = { -0.0f,11.0,3.0 };
 		grasshost->visible = true;
-		grasshost->scale = { 0.1,0.1,0.1 };
+		grasshost->scale = { 0.05,0.05,0.05 };
 		//grasshost->rotationAngles.x = glm::radians(90.0f);
 		grasshost->rotationAngles.z = glm::radians(45.0f);
 		grasshost->castShadow = false;
 		//SObject* ob4 = new SObject("./resources/xrk.obj");
 		//SObject* ob5 = new SObject("./resources/xrk.obj");
-		//SObject* ob3 = new SObject("./resources/bio cha/chris.obj");
+		SObject* ob3 = new SObject("./resources/bio cha/chris.obj");
 		objects.push_back(ob);
 		objects.push_back(ob1);
 		objects.push_back(ob2);
 		//objects.push_back(grasshost);
 		//objects.push_back(ob4);
 		//objects.push_back(ob5);
-		//objects.push_back(ob3);
+		objects.push_back(ob3);
 		ob->rotationAngles.z = glm::radians(180.0f);
-		ob1->position = glm::vec3(-22.0f, -0.75f,0.0f);
-		ob1->scale = glm::vec3(0.02f, 0.02f, 0.02f);
+		ob1->position = glm::vec3(-22.0f, -0.75f, 0.0f);
+		ob1->scale = glm::vec3(0.01f, 0.01f, 0.01f);
 		ob2->position = glm::vec3(4.0f, -0.75f, 5.0f);
-		ob2->scale = glm::vec3(0.02f, 0.02f, 0.02f);
-		ob->scale = glm::vec3(0.02f, 0.02f, 0.02f);
-		//ob3->scale = glm::vec3(0.02f, 0.02f, 0.02f);
+		ob2->scale = glm::vec3(0.01f, 0.01f, 0.01f);
+		ob->scale = glm::vec3(0.01f, 0.01f, 0.01f);
+		ob3->scale = glm::vec3(0.008f, 0.008f, 0.008f);
+		ob3->position = glm::vec3(0.0f, -0.75f, 3.0f);
+		ob3->rotationAngles = glm::vec3(glm::radians(90.0f), 0.0f, 0.0f);
 		/*ob4->visible = true;
 		ob4->position = { -4.0f,-0.75f,2.0f };
 		ob4->scale = glm::vec3(0.08f, 0.08f, 0.08f);
@@ -343,16 +343,24 @@ void render()
 		ob5->position = { -25.0f,-0.75f,3.0f };
 		ob5->scale = glm::vec3(0.05f, 0.05f, 0.05f);*/
 		ob2->visible = true;
-		ob->position = { -1.75f,-0.75f,0 };
+		ob->position = { -1.75f,-0.75f,20.0f };
 		ob->visible = true;
 
-		host = new Camera(0);
+
 		hero = ob;
 		hero->forward = { 0.0f,0,-0.6f };
+
+		host = new Camera(hero);
 		host->forward = { 0,0,0 };
 
 		ob1->symbol = "LinLin";
 		ob2->symbol = "XianZi";
+
+		/*SObject* bd = new SObject("./resources/building.fbx");//new DObject("./resources/bio cha/chris.obj");
+		objects.push_back(bd);
+		bd->position = { 0,8.0f,0 };
+		bd->scale = { 0.02,0.02,0.02 };
+		bd->visible = true;*/
 
 		std::function<void(RObject&, RObject&)> tmp = [&](RObject& hero, RObject& tester) {
 			bump = &tester;
@@ -364,6 +372,12 @@ void render()
 		ob2->collisionB = tmp;
 		ob1->collisionA = tmp2;
 		ob2->collisionA = tmp2;
+		/*waterfloor = generateWaterFace(waterfloor);
+		waterFace = new SMesh(waterfloor, 1024 * 1024, waterindex, 1023 * 1023 * 6);
+		waterFace->setup();*/
+		std::cout << "FLoor Id " << floorTex.id() << std::endl;
+
+		
 
 		mouse = &mousePic;
 
@@ -375,7 +389,7 @@ void render()
 	//ob.position = cameraPos + glm::normalize(cameraUp - cameraFront*angle) * ((-3.6f)*1.1f) + cameraFront * 1.5;
 	
 	static GLuint skybox = loadCubemap(faces);
-	if (FBO == 0)
+	/* initialize */ if (FBO == 0)
 	{
 		glGenFramebuffers(1, &FBO); // 帧缓冲
 		glBindFramebuffer(GL_FRAMEBUFFER, FBO);
@@ -474,7 +488,7 @@ void render()
 
 		
 		testfunc = [&](Particle& p) {
-			float y = terrain.getHeight(p.position.x, p.position.z);
+			float y = terrain->getHeight(p.position.x, p.position.z);
 			y = y < 7.25 ? 7.25 : y;
 			if (y >= p.position.y + 18) { // if a kid never dies out ,lifespan shall not change.
 				p.position = { (rand() % 200) / 5.0 - 20.0 , 0 , (rand() % 200) / 5.0 - 20.0 };
@@ -491,8 +505,8 @@ void render()
 
 		for (int i = 0;i < 100;i++) {
 			glm::mat4 model;
-			model = glm::translate(model, glm::vec3(i / 20.0, -rand() % 100 / 200.0 + 0.2f, i % 20));
-			model = glm::scale(model, glm::vec3(rand() % 100 / 200.0 + 0.4 , rand() % 100 / 200.0 + 0.4, rand() % 100 / 200.0 + 0.4));
+			model = glm::translate(model, glm::vec3(i / 20.0, -rand() % 100 / 2000.0 - 2.0f, i % 20));
+			//model = glm::scale(model, glm::vec3(rand() % 100 / 200.0 + 0.4 , rand() % 100 / 200.0 + 0.4, rand() % 100 / 200.0 + 0.4));
 			model = glm::rotate(model, (float)(rand() % 100 / 33.0), glm::vec3(0, 1, 0));
 			
 			testArr[i] = model;
@@ -522,9 +536,35 @@ void render()
 			glBindVertexArray(0);
 		}
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		if (quadArr == -1) // 初始化 可以 移到 新方法里。QUAD无视，SKYBOX是天空盒子
+		{
+			glGenVertexArrays(1, &quadArr);
+			glGenBuffers(1, &quadVBO);
+			glBindVertexArray(quadArr);
+			glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(quad), &quad, GL_STATIC_DRAW);
+			glEnableVertexAttribArray(0);
+			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)0);
+			glEnableVertexAttribArray(1);
+			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)(2 * sizeof(GLfloat)));
+			glBindVertexArray(0);
+
+			glGenVertexArrays(1, &skyboxVAO);
+			glGenBuffers(1, &skyboxVBO);
+			glBindVertexArray(skyboxVAO);
+			glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+			glEnableVertexAttribArray(0);
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)0);
+			glEnableVertexAttribArray(1);
+			glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+			glEnableVertexAttribArray(2);
+			glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
+			glBindVertexArray(0);
+		}
 	}
 
-	static GLuint quadArr = -1, quadVBO, skyboxVAO, skyboxVBO;
+	
 	glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
 	glEnable(GL_DEPTH_TEST);
 	glClear(GL_DEPTH_BUFFER_BIT);
@@ -602,7 +642,7 @@ void render()
 	}
 	// 画阴影。其实第一部分是设置光源、以及设置物体的位置，其实这部分可以摆在shader之前
 	shadowshader->run();
-	glViewport(0, 0, 4096, 4096);
+	glViewport(0, 0, 4096,4096);
 	GLfloat near_plane = 1.0f, far_plane = 25.0f;
 	//glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
 	glm::mat4 lightProjection = glm::perspective(glm::radians(90.0f),1.0f, near_plane, far_plane);
@@ -625,14 +665,8 @@ void render()
 		glm::lookAt(lightPos, lightPos + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0)));
 	glm::mat4 shadowTransformation;
 	shadowTransformation = lightOrtho * glm::lookAt(
-		glm::vec3(-32 * 0.2f,-32 * -0.53f, -32 * -0.1f)+hero->position, 
-		glm::vec3(16 * 0.2f, 16 * -0.53f, 16 * -0.1f) + hero->position,glm::vec3(0,1.0f,-5.3f));
-	/*model = glm::translate(model, glm::vec3(0.0f, -0.75f, 0.0f)); // Translate it down a bit so it's at the center of the scene
-	model = glm::scale(model, glm::vec3(0.02f, 0.02f, 0.02f));	// It's a bit too big for our scene, so scale it down
-	glm::mat4 model2;
-	model2 = glm::translate(model2, glm::vec3(2.0f, -0.75f, 0.0f)); // Translate it down a bit so it's at the center of the scene
-	model2 = glm::scale(model2, glm::vec3(0.02f, 0.02f, 0.02f));	// It's a bit too big for our scene, so scale it down
-	*/
+		-32.0f * glm::vec3(0.2f,-0.53f, -0.1f)+hero->position, 
+		16.0f * glm::vec3(0.2f, -0.53f, -0.1f) + hero->position,glm::vec3(0,1.0f,0));
 	glm::mat4 model3;
 	
 	
@@ -647,9 +681,15 @@ void render()
 	model4 = glm::scale(model4, glm::vec3(1.0f, 1.0f, 1.0f));
 
 	glm::mat4 oneMat;
-	
-	
-	shadowshader->bind("shadowMatrices", glm::value_ptr(shadowTransformation),6);
+
+	dirLight0.ambient = glm::vec3{ 0.05f,0.05f,0.05f };
+	dirLight0.specular = glm::vec3{ 0.6f,0.4f,0.4f };
+	dirLight0.diffuse = glm::vec3{ 0.9f,0.9f,0.9f };
+	//GLfloat time = glfwGetTime() / 100.0;
+	dirLight0.position = glm::vec3{ glm::sin(time / 2.0)/2.0+1.0, -0.46f , 0.3f };
+	dirLight0.prepareLight(hero->position + 28.0f*hero->forward);
+	dirLight0.bindLight(*shadowshader, "shadowMatrices", 6);
+	//shadowshader->bind("shadowMatrices", glm::value_ptr(shadowTransformation),6);
 	shadowshader->bind("shadowMatrices", glm::value_ptr(shadowTransforms[0]), 0);
 	shadowshader->bind("shadowMatrices", glm::value_ptr(shadowTransforms[1]),1);
 	shadowshader->bind("shadowMatrices", glm::value_ptr(shadowTransforms[2]),2);
@@ -660,7 +700,7 @@ void render()
 	shadowshader->bind("lightPos", lightPos);
 	lightPos.x = 3*glm::sin(glfwGetTime() / 10.0); // 动态光源233
 	lightPos.z = 3*glm::cos(glfwGetTime() / 10.0);
-	shadowshader->bindF("far_plane", 25.0);
+	//shadowshader->bindF("far_plane", 49.0);
 	glCullFace(GL_BACK);
 
 	runTick += 1.0f;
@@ -679,12 +719,12 @@ void render()
 	}
 
 	shadowshader->bind("model", glm::value_ptr(model4));
-	terrain.updateGraphics(shadowshader); // 画地形的阴影
+	terrain->updateGraphics(shadowshader); // 画地形的阴影
 
 	
 	shadowshader1->use();
-	shadowshader1->bind("shadowMatrices", glm::value_ptr(shadowTransformation), 6);
-	shadowshader1->bindF("far_plane", 25.0);
+	dirLight0.bindLight(*shadowshader1, "shadowMatrices", 6);
+	//shadowshader1->bindF("far_plane", 49.0);
 	grasshost->draw(*shadowshader1, 100);
 	
 	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
@@ -696,39 +736,27 @@ void render()
 
 	for (int i = 0;i < objects.size();i++)
 	{
-		objects[i]->position.y = terrain.getHeight(objects[i]->position.x, objects[i]->position.z); // 位置检测
+		objects[i]->position.y = terrain->getHeight(objects[i]->position.x, objects[i]->position.z); // 位置检测
 	}
 
 	int PosY = hero->position.x + 512;
 	int PosX = hero->position.z + 512;
 
-	if (quadArr == -1) // 初始化 可以 移到 新方法里。QUAD无视，SKYBOX是天空盒子
-	{
-		glGenVertexArrays(1, &quadArr);
-		glGenBuffers(1, &quadVBO);
-		glBindVertexArray(quadArr);
-		glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(quad), &quad, GL_STATIC_DRAW);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)0);
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)(2 * sizeof(GLfloat)));
-		glBindVertexArray(0);
-
-		glGenVertexArrays(1, &skyboxVAO);
-		glGenBuffers(1, &skyboxVBO);
-		glBindVertexArray(skyboxVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)0);
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
-		glEnableVertexAttribArray(2);
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
-		glBindVertexArray(0);
-	}
 	
+	/*lightDisplay*/{
+		const glm::vec3 ambient = { 0.18,0.18,0.18 };
+		const glm::vec3 diffuse = { 0.8,0.8,0.62 };
+		const glm::vec3 specular = { 0.8,0.8,0.65 };
+		lightArc = 2;
+		pointLight0.ambient = ambient * ((lightArc - 1)*(lightArc - 1));
+		pointLight0.diffuse = diffuse * ((lightArc - 1)*(lightArc - 1));
+		pointLight0.specular = specular * ((lightArc - 1)*(lightArc - 1));
+		pointLight0.position = lightPos;
+		pointLight0.constant = 1.0;
+		pointLight0.linear = 0.09;
+		pointLight0.quadratic = 0.0125;
+	};
+	 
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearDepth(1.0);
@@ -743,8 +771,6 @@ void render()
 	glBindVertexArray(0);
 	//glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
-	
-
 	_shader->run();
 
 
@@ -757,7 +783,7 @@ void render()
 	_shader->bindF("far_plane",25.0);
 	_shader->bind("shadowMap2", 8);
 	_shader->bind("shadowMap", 6);
-	_shader->bind("dirLight.transform", glm::value_ptr(shadowTransformation));
+	
 	_shader->bind("offsets[0]", glm::value_ptr(oneMat));
 	glActiveTexture(GL_TEXTURE9);
 	glBindTexture(GL_TEXTURE_2D, waterTex.id());
@@ -768,26 +794,18 @@ void render()
 	_shader->bind("waterMap2", 10);
 	_shader->bindF("time", glfwGetTime() / 2.0);
 
-	host->bindCamera(*_shader);
-	const glm::vec3 ambient = { 0.18,0.18,0.18 };
-	const glm::vec3 diffuse = { 0.8,0.8,0.62 };
-	const glm::vec3 specular = { 0.8,0.8,0.65 };
-	lightArc = 2;
-	pointLight0.ambient = ambient * ((lightArc - 1)*(lightArc - 1));
-	pointLight0.diffuse = diffuse * ((lightArc - 1)*(lightArc - 1));
-	pointLight0.specular = specular * ((lightArc - 1)*(lightArc - 1));
-	pointLight0.position = lightPos;
-	pointLight0.constant = 1.0;
-	pointLight0.linear = 0.09;
-	pointLight0.quadratic = 0.0125;
-	//pointLight0.bindLight(*_shader, 0);
-	dirLight0.ambient = glm::vec3{ 0.05f,0.05f,0.05f };
-	dirLight0.specular = glm::vec3{ 0.4f,0.4f,0.4f };
-	dirLight0.diffuse = glm::vec3{ 0.5f,0.5f,0.5f };
-	dirLight0.position = glm::vec3{ 0.2f,-0.53f,-0.1f };
-	_shader->bindF("time", glfwGetTime());
-	dirLight0.bindLight(*_shader, 0);
 	
+
+	host->bindCamera(*_shader);
+
+
+	
+	pointLight0.bindLight(*_shader, 0);
+	dirLight0.bindLight(*_shader);
+
+	_shader->bindF("time", glfwGetTime());
+
+	//_shader->bind("dirLight.transform", glm::value_ptr(shadowTransformation));
 	for (int i = 0; i < objects.size(); i++)
 	{
 		glm::vec3 pos1 = objects[i]->worldPos();
@@ -804,7 +822,7 @@ void render()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	_shader->bind("material.texture_diffuse1", 0);
 	_shader->bind("material.texture_specular1", 0);
-	terrain.updateGraphics(_shader);
+	terrain->updateGraphics(_shader);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	pShader->run();
@@ -820,7 +838,9 @@ void render()
 	grasshost->draw(*pShader, 100);
 
 	glDisable(GL_CULL_FACE);
+	
 	wshader->run();
+	dirLight0.bindLight(*wshader);
 	wshader->bind("model", glm::value_ptr(model3));
 	host->bindCamera(*wshader);
 	glActiveTexture(GL_TEXTURE0);
@@ -834,7 +854,7 @@ void render()
 	wshader->bind("waterMap2", 2);
 	wshader->bindF("time", glfwGetTime()/2.0);
 
-	terrain.updateGraphics(wshader);
+	terrain->updateGraphics(wshader);
 	/*glBindVertexArray(quadArr);
 	
 	glDrawArrays(GL_TRIANGLES, 0, 6); // 画天空盒
@@ -855,9 +875,9 @@ void render()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	
-#ifdef BLOOMTEST
+#ifndef BLOOMTEST
 	bloomshader->run();
-	for (int i = 0;i < 10;i++)
+	for (int i = 0;i < 20;i++)
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, blurFBO[(i+1) % 2]);
 		//glClear(GL_COLOR_BUFFER_BIT);
@@ -903,6 +923,7 @@ void render()
 	glCullFace(GL_NONE);
 	
 	screenShader->run();
+	host->bindCamera(*screenShader);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, screen[0]);
 	screenShader->bind("screenTexture", 0);
@@ -910,7 +931,7 @@ void render()
 	glBindTexture(GL_TEXTURE_2D,  blurMap[0]);
 	screenShader->bind("bloomBlur", 1);
 	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, screen[0]);// blurMap[1]);
+	glBindTexture(GL_TEXTURE_2D, blurMap[1]);
 	screenShader->bind("near", 2);
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, screen[2]);
@@ -961,7 +982,7 @@ bool key[1024];
 void movement()
 {
 	const GLfloat MaxcameraSpeed = 0.25f;
-	static GLfloat cameraSpeed = 0;
+	static GLfloat cameraSpeed = 0.25f;
 	static glm::vec3 lastDir;
 	static int delay = 50;
 	// temp variable
@@ -970,18 +991,16 @@ void movement()
 	glm::vec3 cameraPos = hero->position;
 	running = false;
 	bump = 0;
-	static glm::vec3 cameraWorldPos[10];
-	host->position = glm::vec3{0,4,10} + cameraWorldPos[0];
-	for (int i = 9;i > 0;i--)
-		cameraWorldPos[i] = cameraWorldPos[i - 1];
-	cameraWorldPos[0] = hero->position;
+	static glm::vec3 cameraWorldPos;
+	//host->position = glm::vec3{0,1.5,3} + hero->position;
+
 	if(delay > 0) delay--;
+
 	if (key[GLFW_KEY_W])
 	{
 		cameraPos += cameraSpeed * hero->forward;
 		hero->rotationAngles.z = glm::radians(180.0f);
 		lastDir = hero->forward;
-		if (cameraSpeed < MaxcameraSpeed) cameraSpeed += 0.05f;
 		running = true;
 	}
 	if (key[GLFW_KEY_S]) {
@@ -989,7 +1008,6 @@ void movement()
 		hero->rotationAngles.z = glm::radians(0.0f);
 		running = true;
 		lastDir = -hero->forward;
-		if (cameraSpeed < MaxcameraSpeed) cameraSpeed += 0.05f;
 	}
 	if (key[GLFW_KEY_A])
 	{
@@ -999,7 +1017,6 @@ void movement()
 		else if (key[GLFW_KEY_S]) hero->rotationAngles.z = glm::radians(-45.0f);
 		running = true;
 		lastDir = -glm::normalize(glm::cross(hero->forward, host->Up));
-		if (cameraSpeed < MaxcameraSpeed) cameraSpeed += 0.05f;
 	}
 	if (key[GLFW_KEY_D])
 	{
@@ -1009,23 +1026,24 @@ void movement()
 		else if (key[GLFW_KEY_S]) hero->rotationAngles.z = glm::radians(45.0f);
 		running = true;
 		lastDir = glm::normalize(glm::cross(hero->forward, host->Up));
-		if (cameraSpeed < MaxcameraSpeed) cameraSpeed += 0.05f;
 	}
 	if (key[GLFW_KEY_Q])
 	{
-		hero->model->headangle += 0.2f;
+		DirLight::max += 0.1f;
+		//hero->model->headangle += 0.2f;
 	}
 	if (key[GLFW_KEY_E])
 	{
-		hero->model->headangle -= 0.2f;
+		DirLight::max -= 0.1f;
+		//hero->model->headangle -= 0.2f;
 	}
-	if (!running)
+	/*if (!running)
 	{
 		if (cameraSpeed > 0) {
 			cameraSpeed -= 0.05f;
 			cameraPos += cameraSpeed * lastDir;
 		}
-	}
+	}*/
 
 	if (key[GLFW_KEY_SPACE])
 	{
@@ -1050,7 +1068,9 @@ void movement()
 			std::cout << "\n";
 		}
 	}*/
+	
 
+	
 	if (key[GLFW_KEY_UP])
 	{
 		changePos.y += 1.0;
@@ -1081,13 +1101,26 @@ void movement()
 	bool collitest = false;
 	
 	glm::vec3 ori = hero->position;
+
+	float old_y = terrain->getHeight(hero->position.x, hero->position.z); // 位置检测
+	float new_y = terrain->getHeight(cameraPos.x, cameraPos.z);
+
 	hero->position = cameraPos;
+
 	for (int i = 1; i < objects.size(); i++)
 	{
 		collitest |= objects[i]->collisionTest(*hero);
 		//if (collitest) return;
 	}
-	if (collitest) hero->position = ori;
+	if ((new_y - old_y > 1.0f) || (new_y - old_y < -1.0f))
+	{
+		int a = 2;
+		int b = 3;
+		printf("%f, %f\n", new_y, old_y);
+	}
+	// || (new_y - old_y > 0.5f) || (new_y - old_y < -0.5f)
+	if (collitest ) hero->position = ori;
+	
 }
 
 void key_callback(GLFWwindow* window, int _key, int scancode, int action, int mode)
@@ -1109,7 +1142,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 	mousePos.y 
 		= ypos;
 	//gluUnProject(xpos, ypos, 0, );
-	return;
+	//return;
 	if (!first)
 	{
 		first = true;
@@ -1118,11 +1151,12 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 		return;
 	}
 	
-	
-	GLfloat xoffset = lastX - xpos;
+	GLfloat yoffset = ypos * 2 - Scheight;
+	yaw = -glm::sin(yoffset * glm::pi<float>() / 2.0f / Scheight);
+	GLfloat xoffset = xpos * 2 - Scwidth;
+	pitch = xoffset * glm::pi<float>() / 2.0f / Scwidth;
+	/*GLfloat xoffset = lastX - xpos;
 	GLfloat yoffset = lastY - ypos; // Reversed since y-coordinates range from bottom to top
-	/*lastX = xpos;
-	lastY = ypos;*/
 
 	GLfloat sensitivity = 0.3f;
 	xoffset *= sensitivity;
@@ -1139,7 +1173,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 	front.z = cos(glm::radians(pitch)) * cos(glm::radians(yaw));
 	host->Front = glm::normalize(front);
 	front.y = 0;
-	hero->forward = glm::normalize(front);
+	hero->forward = glm::normalize(front);*/
 	//pitch = pitch + backForce;
 	//std::cout << front.x << front.y << front.z << std::endl;
 }
@@ -1240,7 +1274,10 @@ int main()
 	glCullFace(GL_BACK);
 	glEnable(GL_BLEND);
 	glEnable(GL_DOUBLEBUFFER);
+	//glEnable(GL_EXT_multisample);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	
+
 	//glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 	//tasks[0] = new std::thread(animate_load);
 	//tasks[1] = new std::thread(animate_load);
