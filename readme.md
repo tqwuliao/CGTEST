@@ -16,3 +16,6 @@
 -  比较geometry-level的水面渲染
 -  全局光照
 -  之前完全不懂shared_ptr的时候写的一个完全错误的cache。。丢人
+
+![image](./Pic/bloomFlower.jpg)
+![image](./Pic/bloomWater.jpg)
