@@ -1,7 +1,18 @@
-话说回来这里用一个皇子模型是不是侵权……但我没公开也没商用不知道要不要紧，如果侵权再删掉好惹
-![略略略](./Pic/1.jpg)
-![略略略](./Pic/2.jpg)
-![略略略](./Pic/3.jpg)
-![略略略](./Pic/4.jpg)
-![略略略](./Pic/5.jpg)
-![略略略](./Pic/6.jpg)
+# CGTEST
+
+## Done
+- 法线模拟水面
+- Directional Light && Point Light，仅对DL进行了阴影处理
+- 基于Instance的植被
+- half-copy的骨骼动画和动画融合
+- 很微妙的法线贴图实现
+- 很偷懒的HDR
+- 地形
+- 还没有改写实例化的粒子
+- GUI
+
+## TODO
+-  SSAO（half failed）
+-  比较geometry-level的水面渲染
+-  全局光照
+-  之前完全不懂shared_ptr的时候写的一个完全错误的cache。。丢人
