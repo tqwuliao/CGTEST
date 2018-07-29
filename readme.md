@@ -1,5 +1,7 @@
 # CGTEST
 
+7.29更新naive的bokeh实现，效率堪忧，一个点要重新采样2000+次，而且效果不怎么好。
+
 ## Done
 - 法线模拟水面
 - Directional Light && Point Light，仅对DL进行了阴影处理
@@ -19,3 +21,7 @@
 
 ![image](./Pic/bloomFlower.jpg)
 ![image](./Pic/bloomWater.jpg)
+![image](./Pic/bokeh1.bmp)
+![image](./Pic/bokeh2.bmp)
+![image](./Pic/bokeh3.bmp)
+![image](./Pic/bokeh4.bmp)
