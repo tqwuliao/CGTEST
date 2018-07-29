@@ -4,6 +4,7 @@ out vec4 color;
 uniform sampler2D screenTexture;
 uniform sampler2D bloomBlur;
 uniform sampler2D near,far;
+uniform sampler2D bokeh;
 uniform mat4 view;
 uniform mat4 projection;
 void main()
@@ -44,6 +45,17 @@ void main()
      //hdrColor = FOCUS.rgb;
      //hdrColor = vec3(ratio*ratio);
      vec4 bloom = texture(bloomBlur,TexCoords).rgba;
+     if(true) {
+       for(int i = -24; i < 25;i++) {
+       for(int j = -24; j < 25;j++) {
+         float v = texture(screenTexture,TexCoords + vec2(i / 1280.0,j  / 900.0)).r;
+         float a = texture(far,TexCoords + vec2(i / 1280.0,j  / 900.0)).a;
+         if(v < 0.8f) continue;
+         if(a >= 0.995 && a < 0.9995 || a >= 0.9999) continue;
+         bloom.rgb += texture(bokeh, vec2(-i / 50.0 + 0.5f,-j / 50.0 + 0.5f)).rgb * (v-0.5f) / 10.0f;
+       }
+     }
+     }
      hdrColor += bloom.rgb;
      vec3 mapped = vec3(1.0) - exp(-hdrColor * exposure);
      mapped = pow(mapped,vec3(1.0 / gamma));
