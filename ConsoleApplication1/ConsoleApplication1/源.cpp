@@ -258,6 +258,7 @@ void render()
 	static Texture floorTex("./resources/203668.jpg");
 	static Texture waterTex("./resources/waternormal.png");
 	static Texture waterTex2("./resources/waternormal2.png");
+	static Texture bokeh("./resources/bokeh2.jpg");
 	static UiClass mousePic(".\\resources\\mouse.png");
 	static glm::mat4 testArr[100];
 	static PointLight pointLight0;
@@ -936,6 +937,9 @@ void render()
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, screen[2]);
 	screenShader->bind("far", 3);
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, bokeh.id());
+	screenShader->bind("bokeh",4);
 	glBindVertexArray(quadArr);
 	
 	glDrawArrays(GL_TRIANGLES, 0, 6);
