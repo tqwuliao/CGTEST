@@ -21,7 +21,10 @@
 
 ![image](./Pic/bloomFlower.jpg)
 ![image](./Pic/bloomWater.jpg)
+将bloom算进焦外，看起来还行
 ![image](./Pic/bokeh1.jpg)
+天空太白且算focus外
 ![image](./Pic/bokeh2.jpg)
+天空太白且算focus外，过多密集亮色导致看起来很花
 ![image](./Pic/bokeh3.jpg)
 ![image](./Pic/bokeh4.jpg)
