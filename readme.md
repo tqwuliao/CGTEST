@@ -21,7 +21,7 @@
 
 ![image](./Pic/bloomFlower.jpg)
 ![image](./Pic/bloomWater.jpg)
-![image](./Pic/bokeh1.bmp)
-![image](./Pic/bokeh2.bmp)
-![image](./Pic/bokeh3.bmp)
-![image](./Pic/bokeh4.bmp)
+![image](./Pic/bokeh1.jpg)
+![image](./Pic/bokeh2.jpg)
+![image](./Pic/bokeh3.jpg)
+![image](./Pic/bokeh4.jpg)
